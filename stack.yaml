@@ -1,0 +1,7 @@
+resolver: lts-10.4
+packages:
+- .
+extra-deps:
+- shakers-0.0.40
+- preamble-0.0.58
+
