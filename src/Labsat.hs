@@ -88,6 +88,11 @@ command c p = do
   sendCmd c
   receiveit $ parseCommandAck c *> p
 
+-- | Send a command and parse for OK and the prompt
+--
+okCommand :: (MonadTcpCtx c m) => ByteString -> m ByteString
+okCommand = flip command okPrompt
+
 -- Swallow first message, capture and print second one (debug)
 --
 debugRecv :: ByteString -> ByteString -> Int -> IO ()
@@ -176,17 +181,17 @@ mediaChdir d = command ("MEDIA:CHDIR:" <> d) parseMediaChdir
 -- | MEDIA:PROTECT:Y/N:FILE command.
 --
 mediaProtect :: MonadTcpCtx c m => Bool -> ByteString -> m ByteString
-mediaProtect b f = command ("MEDIA:PROTECT:" <> bool "N:" "Y:" b <> f) okPrompt
+mediaProtect b f = okCommand $ "MEDIA:PROTECT:" <> bool "N:" "Y:" b <> f
 
 -- | MEDIA:DELETE:FILE command.
 --
 mediaDelete :: MonadTcpCtx c m => ByteString -> m ByteString
-mediaDelete f = command ("MEDIA:DELETE:" <> f) okPrompt
+mediaDelete f = okCommand $ "MEDIA:DELETE:" <> f
 
 -- | MEDIA:SELECT:SD/USB/SATA command.
 --
 mediaSelect :: MonadTcpCtx c m => MediaType -> m ByteString
-mediaSelect s = command ("MEDIA:SELECT:" <> showToBs s) okPrompt
+mediaSelect s = okCommand $ "MEDIA:SELECT:" <> showToBs s
 
 --------------------------------------------------------------------------------
 -- Play command
@@ -210,7 +215,7 @@ play' pc = command cmd (parsePlay file')
 -- | PLAY:STOP command.
 --
 playStop :: MonadTcpCtx c m => m ByteString
-playStop = command "PLAY:STOP" okPrompt
+playStop = okCommand "PLAY:STOP"
 
 -- | PLAY:? command.
 --
@@ -233,7 +238,7 @@ info = command "TYPE" parseInfo
 -- | FIND command.
 --
 find :: MonadTcpCtx c m => m ByteString
-find = command "FIND" okPrompt
+find = okCommand "FIND"
 
 --------------------------------------------------------------------------------
 -- Mon command
@@ -242,12 +247,12 @@ find = command "FIND" okPrompt
 -- | MON:NMEA:ON command.
 --
 nmeaOn :: MonadTcpCtx c m => m ByteString
-nmeaOn = command "MON:NMEA:ON" okPrompt
+nmeaOn = okCommand "MON:NMEA:ON"
 
 -- | MON:NMEA:OFF command.
 --
 nmeaOff :: MonadTcpCtx c m => m ByteString
-nmeaOff = command "MON:NMEA:OFF" okPrompt
+nmeaOff = okCommand "MON:NMEA:OFF"
 
 -- | Capture NMEA log for 'n' seconds
 --
@@ -289,7 +294,7 @@ rec' rc = command cmd parseRec
 -- | REC:STOP command.
 --
 recStop :: MonadTcpCtx c m => m ByteString
-recStop = command "REC:STOP" okPrompt
+recStop = okCommand "REC:STOP"
 
 -- | REC:? command.
 --
@@ -303,19 +308,19 @@ recStatus = command "REC:?" parseRecordStatus
 -- | MUTE command.
 --
 mute :: MonadTcpCtx c m => Bool -> m ByteString
-mute b = command ("MUTE:" <> boolToBs b) okPrompt
+mute b = okCommand ("MUTE:" <> boolToBs b)
 
 -- | MUTE command that supports individual channel control.
 --
 mute' :: MonadTcpCtx c m => MuteConf -> m ByteString
 mute' mc =
   case mc ^. mcMuteAll of
-    Just b  -> command ("MUTE:" <> b2c b) okPrompt
+    Just b  -> okCommand ("MUTE:" <> b2c b)
     Nothing -> do
       let ch1 = fromMaybeBoolToMuteStr "CH1" $ mc ^. mcMuteCh1
           ch2 = fromMaybeBoolToMuteStr "CH2" $ mc ^. mcMuteCh2
           ch3 = fromMaybeBoolToMuteStr "CH3" $ mc ^. mcMuteCh3
-      command ("MUTE:" <> ch1 <> ch2 <> ch3) okPrompt
+      okCommand ("MUTE:" <> ch1 <> ch2 <> ch3)
     where
       b2c = boolToBs
       fromMaybeBoolToMuteStr prefix m = case m of
@@ -354,64 +359,64 @@ attn' ac =
 -- | CONF:PLAY:LOOP command.
 --
 confPlayLoop :: MonadTcpCtx c m => Bool -> m ByteString
-confPlayLoop b = command ("CONF:PLAY:LOOP:" <> boolToBs b) okPrompt
+confPlayLoop b = okCommand ("CONF:PLAY:LOOP:" <> boolToBs b)
 
 -- | CONF:PLAY:PAUSE command.
 --
 confPlayPause :: MonadTcpCtx c m => Int -> m ByteString
-confPlayPause i = command ("CONF:PLAY:PAUSE:" <> intToBs i) okPrompt
+confPlayPause i = okCommand ("CONF:PLAY:PAUSE:" <> intToBs i)
 
 -- | CONF:PLAY:FOR command.
 --
 confPlayFor :: MonadTcpCtx c m => Int -> m ByteString
-confPlayFor i = command ("CONF:PLAY:FOR:" <> intToBs i) okPrompt
+confPlayFor i = okCommand ("CONF:PLAY:FOR:" <> intToBs i)
 
 -- | CONF:PLAY:FROM command.
 --
 confPlayFrom :: MonadTcpCtx c m => Int -> m ByteString
-confPlayFrom i = command ("CONF:PLAY:FROM:" <> intToBs i) okPrompt
+confPlayFrom i = okCommand ("CONF:PLAY:FROM:" <> intToBs i)
 
 -- | CONF:PLAY:FOR:FROM command.
 --
 confPlayForFrom :: MonadTcpCtx c m => Int -> Int -> m ByteString
-confPlayForFrom i j = command ("CONF:PLAY:FOR:" <> intToBs i <> ":FROM:" <> intToBs j) okPrompt
+confPlayForFrom i j = okCommand ("CONF:PLAY:FOR:" <> intToBs i <> ":FROM:" <> intToBs j)
 
 -- | CONF:REC:FOR command.
 --
 confRecFor :: MonadTcpCtx c m => Int -> m ByteString
-confRecFor i = command ("CONF:REC:FOR:" <> intToBs i) okPrompt
+confRecFor i = okCommand ("CONF:REC:FOR:" <> intToBs i)
 
 -- | CONF:SETUP:DISP:CONT command.
 --
 confContrast :: MonadTcpCtx c m => Int -> m ByteString
-confContrast i = command ("CONF:SETUP:DISP:CONT:" <> intToBs i) okPrompt
+confContrast i = okCommand ("CONF:SETUP:DISP:CONT:" <> intToBs i)
 
 -- | CONF:SETUP:DISP:BRIG command.
 --
 confBrightness :: MonadTcpCtx c m => Int -> m ByteString
-confBrightness i = command ("CONF:SETUP:DISP:BRIG:" <> intToBs i) okPrompt
+confBrightness i = okCommand ("CONF:SETUP:DISP:BRIG:" <> intToBs i)
 
 -- | CONF:SETUP:PSAV command.
 --
 confPsav :: MonadTcpCtx c m => Bool -> m ByteString
-confPsav b = command ("CONF:SETUP:PSAV:" <> boolToBs b) okPrompt
+confPsav b = okCommand ("CONF:SETUP:PSAV:" <> boolToBs b)
 
 -- | CONF:SETUP:SYNC command.
 --
 confSync :: MonadTcpCtx c m => Bool -> m ByteString
-confSync b = command ("CONF:SETUP:SYNC:" <> boolToBs b) okPrompt
+confSync b = okCommand ("CONF:SETUP:SYNC:" <> boolToBs b)
 
 
 -- | CONF:SETUP:BEEP command.
 --
 confBeep :: MonadTcpCtx c m => Bool -> m ByteString
-confBeep b = command ("CONF:SETUP:BEEP:" <> boolToBs b) okPrompt
+confBeep b = okCommand ("CONF:SETUP:BEEP:" <> boolToBs b)
 
 
 -- | CONF:SETUP:TIME:UTC command.
 --
 confTimeUTC :: MonadTcpCtx c m => m ByteString
-confTimeUTC = command "CONF:SETUP:TIME:UTC:Y" okPrompt
+confTimeUTC = okCommand "CONF:SETUP:TIME:UTC:Y"
 
 -- | CONF:SETUP:TIME:MAN command.
 --
@@ -424,12 +429,12 @@ confTimeManual :: MonadTcpCtx c m
                -> ByteString
                -> m ByteString
 confTimeManual year month day hours minutes seconds =
-  command ("CONF:SETUP:TIME:UTC:N:MAN:" <> intercalate ":" [year, month, day, hours, minutes, seconds]) okPrompt
+  okCommand ("CONF:SETUP:TIME:UTC:N:MAN:" <> intercalate ":" [year, month, day, hours, minutes, seconds])
 
 -- | CONF:SETUP:DIGI command.
 --
 confDigi :: MonadTcpCtx c m => CANChannel -> DigitalFunction -> m ByteString
-confDigi ch df = command ("CONF:SETUP:DIGI:" <> showToBs ch <> ":" <> showToBs df) okPrompt
+confDigi ch df = okCommand ("CONF:SETUP:DIGI:" <> showToBs ch <> ":" <> showToBs df)
 
 -- | CONF:SETUP:CAN:CH*:BAUD command.
 --
@@ -440,37 +445,37 @@ confCANBaud ch val = command ("CONF:SETUP:CAN:" <> showToBs ch <> ":BAUD:" <> sh
 -- | CONF:SETUP:CAN:SILENT command.
 --
 confCANSilent :: MonadTcpCtx c m => Bool -> m ByteString
-confCANSilent b = command ("CONF:SETUP:CAN:SILENT:" <> boolToBs b) okPrompt
+confCANSilent b = okCommand ("CONF:SETUP:CAN:SILENT:" <> boolToBs b)
 
 -- | CONF:SETUP:CAN:LOGFILE command.
 --
 confCANLogfile :: MonadTcpCtx c m => Bool -> m ByteString
-confCANLogfile b = command ("CONF:SETUP:CAN:LOGFILE:" <> boolToBs b) okPrompt
+confCANLogfile b = okCommand ("CONF:SETUP:CAN:LOGFILE:" <> boolToBs b)
 
 -- | CONF:SETUP:CAN:REPLAYFILE command.
 --
 confCANReplayfile :: MonadTcpCtx c m => Bool -> m ByteString
-confCANReplayfile b = command ("CONF:SETUP:CAN:REPLAYFILE:" <> boolToBs b) okPrompt
+confCANReplayfile b = okCommand ("CONF:SETUP:CAN:REPLAYFILE:" <> boolToBs b)
 
 -- | CONF:SETUP:CLKREF:OCXO command.
 --
 confClkRefOCXO :: MonadTcpCtx c m => m ByteString
-confClkRefOCXO = command "CONF:SETUP:CLKREF:OCXO" okPrompt
+confClkRefOCXO = okCommand "CONF:SETUP:CLKREF:OCXO"
 
 -- | CONF:SETUP:CLKREF:TCXO command.
 --
 confClkRefTCXO :: MonadTcpCtx c m => m ByteString
-confClkRefTCXO = command "CONF:SETUP:CLKREF:TCXO" okPrompt
+confClkRefTCXO = okCommand "CONF:SETUP:CLKREF:TCXO"
 
 -- | CONF:SETUP:CLKREF:EXT command.
 --
 confClkRefEXT :: MonadTcpCtx c m => m ByteString
-confClkRefEXT = command "CONF:SETUP:CLKREF:EXT" okPrompt
+confClkRefEXT = okCommand "CONF:SETUP:CLKREF:EXT"
 
 -- | CONF:SETUP:CLKREF:REFOUT command.
 --
 confClkRefout :: MonadTcpCtx c m => Bool -> m ByteString
-confClkRefout b = command ("CONF:SETUP:CLKREF:REFOUT:" <> boolToBs b) okPrompt
+confClkRefout b = okCommand ("CONF:SETUP:CLKREF:REFOUT:" <> boolToBs b)
 
 -- | CONF:CONS command.
 --
