@@ -6,7 +6,6 @@ module Labsat.Types where
 
 import Data.ByteString()
 import Data.Scientific
-import Data.List (intersperse)
 import Preamble
 
 
