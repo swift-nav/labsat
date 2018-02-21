@@ -125,6 +125,7 @@ instance Show CANChannel where
 -- | Bandwidth type
 --
 data Bandwidth = BW_10 | BW_30 | BW_56
+  deriving (Eq)
 
 instance Show Bandwidth where
   show BW_10 = "BW:10"
@@ -134,6 +135,7 @@ instance Show Bandwidth where
 -- | Quantization type
 --
 data Quantization = QUA1 | QUA2 | QUA3
+  deriving (Eq)
 
 instance Show Quantization where
   show QUA1 = "QUA:1"
@@ -205,7 +207,6 @@ data ConstellationPresetConf = ConstellationPresetConf
   , _cpcBandwidth :: Bandwidth
     -- Frequency presets (up to three)
   , _cpcFreqPresets :: [FreqPreset]
-
   }
 
 $(makeLenses ''ConstellationPresetConf)
@@ -229,7 +230,7 @@ data ConstellationFreqConf = ConstellationFreqConf
   , _cfcBandwidth :: Bandwidth
     -- Frequencies
   , _cfcFrequencies :: [Scientific]
-  }
+  } deriving (Eq)
 
 $(makeLenses ''ConstellationFreqConf)
 
