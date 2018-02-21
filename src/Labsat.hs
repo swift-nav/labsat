@@ -16,7 +16,7 @@ import           Data.Conduit.Network
 import           Labsat.Ctx
 import           Labsat.Parser
 import           Labsat.Types
-import           Preamble                  hiding (takeWhile, take)
+import           Preamble
 import           System.IO                 hiding (print, putStrLn)
 
 
@@ -49,23 +49,21 @@ colorStripper = do
   mx <- await
   case mx of
     Nothing -> return ()
-    Just bs -> do
-      case (BS.findIndex isEscape bs) of
+    Just bs ->
+      case BS.findIndex isEscape bs of
         Nothing -> do
           yield bs
           colorStripper
         Just idx -> do
           let (prefix, escape) = BS.splitAt idx bs
           yield prefix
-          case (parse parseColorSeq escape) of
-            Fail _ _ _ -> do
+          case parse parseColorSeq escape of
+            Fail{} -> do
               let (h,t) = BS.splitAt 1 escape
               yield h
               leftover t
-            Partial _ -> do
-              leftover escape
-            Done i _ -> do
-              leftover i
+            Partial _ -> leftover escape
+            Done i _ -> leftover i
           colorStripper
 
 -- | Receive command response and strip color codes
@@ -93,7 +91,7 @@ command c p = do
 -- Swallow first message, capture and print second one (debug)
 --
 debugRecv :: ByteString -> ByteString -> Int -> IO ()
-debugRecv msg host port = do
+debugRecv msg host port =
   runCtx $ runStatsCtx $
     runGeneralTCPClient (clientSettings port host) $
       flip runTcpCtx $ do
@@ -107,7 +105,7 @@ debugRecv msg host port = do
         print (res <> "LABSAT_V3 >")
 
 testCommand :: (MonadStatsCtx c m, Show a) => ByteString -> Int -> TransT TcpCtx m a -> m ()
-testCommand host port cmd = do
+testCommand host port cmd =
   runGeneralTCPClient (clientSettings port host) $
     flip runTcpCtx $ do
       msg0 <- receiveit parseFirstLabsatMsg
@@ -127,7 +125,7 @@ argFromMaybe :: (Show a) => ByteString -> Maybe a -> ByteString
 argFromMaybe a m =
   case m of
     Nothing -> ""
-    Just m' -> a ++ (showToBs m')
+    Just m' -> a ++ showToBs m'
 
 -- Int -> ByteString
 --
@@ -188,7 +186,7 @@ mediaDelete f = command ("MEDIA:DELETE:" <> f) okPrompt
 -- | MEDIA:SELECT:SD/USB/SATA command.
 --
 mediaSelect :: MonadTcpCtx c m => MediaType -> m ByteString
-mediaSelect s = command ("MEDIA:SELECT:" <> (showToBs s)) okPrompt
+mediaSelect s = command ("MEDIA:SELECT:" <> showToBs s) okPrompt
 
 --------------------------------------------------------------------------------
 -- Play command
@@ -310,8 +308,8 @@ mute b = command ("MUTE:" <> boolToBs b) okPrompt
 -- | MUTE command that supports individual channel control.
 --
 mute' :: MonadTcpCtx c m => MuteConf -> m ByteString
-mute' mc = do
-  case (mc ^. mcMuteAll) of
+mute' mc =
+  case mc ^. mcMuteAll of
     Just b  -> command ("MUTE:" <> b2c b) okPrompt
     Nothing -> do
       let ch1 = fromMaybeBoolToMuteStr "CH1" $ mc ^. mcMuteCh1
@@ -337,7 +335,7 @@ attn i = command ("ATTN:" <> intToBs i) parseAttn
 --
 attn' :: MonadTcpCtx c m => AttnConf -> m AttnConf
 attn' ac =
-  case (ac ^. acAttnAll) of
+  case ac ^. acAttnAll of
     Just i  -> command ("ATTN:" <> intToBs i) parseAttn
     Nothing -> do
       let ch1 = fromMaybeIntToAttnStr "CH1" $ ac ^. acAttnCh1
@@ -356,7 +354,7 @@ attn' ac =
 -- | CONF:PLAY:LOOP command.
 --
 confPlayLoop :: MonadTcpCtx c m => Bool -> m ByteString
-confPlayLoop b = command ("CONF:PLAY:LOOP:" <> (boolToBs b)) okPrompt
+confPlayLoop b = command ("CONF:PLAY:LOOP:" <> boolToBs b) okPrompt
 
 -- | CONF:PLAY:PAUSE command.
 --
@@ -426,7 +424,7 @@ confTimeManual :: MonadTcpCtx c m
                -> ByteString
                -> m ByteString
 confTimeManual year month day hours minutes seconds =
-  command ("CONF:SETUP:TIME:UTC:N:MAN:" <> (mconcat $ intersperse ":" [year, month, day, hours, minutes, seconds])) okPrompt
+  command ("CONF:SETUP:TIME:UTC:N:MAN:" <> intercalate ":" [year, month, day, hours, minutes, seconds]) okPrompt
 
 -- | CONF:SETUP:DIGI command.
 --
@@ -487,7 +485,7 @@ confConstellationFreq cc = command ("CONF:CONS:" <> showToBs cc) parseConsFreq
 -- | CONF:? command.
 --
 confQuery :: MonadTcpCtx c m => m ByteString
-confQuery = command ("CONF:?") parseUntilPrompt
+confQuery = command "CONF:?" parseUntilPrompt
 
 a'' :: ByteString
 a'' = "\255\253\SOH\255\253!\255\251\SOH\255\251\ETX\ESC[0m\r\r\n\ESC[0mLABSAT_V3 >"

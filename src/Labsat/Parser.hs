@@ -40,10 +40,10 @@ isEscape :: Word8 -> Bool
 isEscape = (== 27)
 
 notNewline :: Word8 -> Bool
-notNewline = \w -> w /= 10 && w /= 13
+notNewline w = w /= 10 && w /= 13
 
 parseNotNewline :: Parser Word8
-parseNotNewline = satisfy $ notNewline
+parseNotNewline = satisfy notNewline
 
 mediaDelim :: Parser ByteString
 mediaDelim = string " \ESC[40G "
@@ -100,7 +100,7 @@ parseColorSeq = do
   esc <- string "\ESC["
   n <- takeDigits
   m <- string "m"
-  return $ (BS.concat $ [esc, n, m])
+  return $ BS.concat [esc, n, m]
 
 -- | Parse Labsat header
 --
@@ -119,7 +119,7 @@ parseIP = do
   octet3 <- takeDigits
   _ <- char '.'
   octet4 <- takeDigits
-  return $ foldr (++) "" $ intersperse "." [octet1, octet2, octet3, octet4]
+  return $ intercalate "." [octet1, octet2, octet3, octet4]
 
 -- | Parse Duration HH:MM:SS
 --
@@ -130,7 +130,7 @@ parseDuration = do
   mm <- takeWhile isDigit_w8
   _ <- char ':'
   ss <- takeWhile isDigit_w8
-  return $ foldr (++) "" $ intersperse ":" [hh, mm, ss]
+  return $ intercalate ":" [hh, mm, ss]
 
 -- | Parse In Use Error
 --
@@ -164,7 +164,7 @@ parseMedia :: Parser Media
 parseMedia = parseMediaFile <|> parseMediaDir
 
 parseMediaList :: Parser MediaList
-parseMediaList = MediaList <$> (manyTill parseMedia (newline *> prompt))
+parseMediaList = MediaList <$> manyTill parseMedia (newline *> prompt)
 
 parseMediaChdir :: Parser ByteString
 parseMediaChdir = takeWhile notNewline <* takeNewlines <* ok <* takeNewlines <* prompt
@@ -182,14 +182,14 @@ parsePlayIdle = do
   return PlayIdle
 
 parsePlaying :: Parser PlayStatus
-parsePlaying = do
+parsePlaying =
   Playing <$> parseFile <*> parseDuration'
     where
-      parseFile      = "PLAY:/mnt/sata/" *> (takeWhile1 (not . colon))
+      parseFile      = "PLAY:/mnt/sata/" *> takeWhile1 (not . colon)
       parseDuration' = ":DUR:" *> parseDuration
 
 parsePlay :: ByteString -> Parser ByteString
-parsePlay f = string f <* (takeWhile notNewline) <* takeNewlines <* prompt
+parsePlay f = string f <* takeWhile notNewline <* takeNewlines <* prompt
 
 parsePlayStatus :: Parser PlayStatus
 parsePlayStatus = (parsePlayIdle <|> parsePlaying) <* takeNewlines <* prompt
@@ -206,10 +206,10 @@ parseRecordIdle = do
   return RecordIdle
 
 parseRecording :: Parser RecordStatus
-parseRecording = do
+parseRecording =
   Recording <$> parseFile <*> parseDuration'
     where
-      parseFile      = "REC:/mnt/sata/" *> (takeWhile1 (not . colon))
+      parseFile      = "REC:/mnt/sata/" *> takeWhile1 (not . colon)
       parseDuration' = ":DUR:" *> parseDuration
 
 parseRecordStatus :: Parser RecordStatus
@@ -285,8 +285,8 @@ parseAttn =
     parseChannelAttn "CH2" <*>
     parseChannelAttn "CH3" <* ok <* takeNewlines <* prompt
     where
-      parseChannelId ch = (string $ "OK:ATTN:"++ch++":")
-      parseChannelAttn ch = option Nothing (parseChannelId ch *> (Just <$> (signed decimal)) <* " " <* takeNewlines)
+      parseChannelId ch = string $ "OK:ATTN:"++ch++":"
+      parseChannelAttn ch = option Nothing (parseChannelId ch *> (Just <$> signed decimal) <* " " <* takeNewlines)
 
 --------------------------------------------------------------------------------
 -- CONF Parsers
@@ -321,7 +321,7 @@ parseConsPreset =
           parseBW    = parseBandwidth <* ", "
           parsePresets = do
             _ <- string "Available ch(" <* takeDigits <* string ") "
-            presets <- takeDigits `sepBy'` (string ", ") <* string " "
+            presets <- takeDigits `sepBy'` string ", " <* string " "
             return $ freqPresetLookup <$> presets
 
 parseConsFreq :: Parser ConstellationFreqConf
@@ -332,7 +332,6 @@ parseConsFreq =
           parseBW    = parseBandwidth <* ", "
           parseFreqs = do
             _ <- string "Available ch(" <* takeDigits <* string ") "
-            presets <- scientific `sepBy'` (string ", ") <* string " "
-            return $ presets
+            scientific `sepBy'` string ", " <* string " "
 
 

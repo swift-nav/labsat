@@ -12,14 +12,14 @@ import Preamble
 
 -- | HelpCommands: List of commands returned by 'HELP'
 --
-data HelpCommands =
+newtype HelpCommands =
   HelpCommands [ByteString]
   deriving (Eq, Show)
 
 
 -- | Info: List of information returned by 'TYPE'
 --
-data Info =
+newtype Info =
   Info [ByteString]
   deriving (Eq, Show)
 
@@ -101,7 +101,7 @@ data Media =
 
 -- | MediaList: List of files and directories
 --
-data MediaList =
+newtype MediaList =
   MediaList [Media]
   deriving (Eq, Show)
 
@@ -213,11 +213,11 @@ $(makeLenses ''ConstellationPresetConf)
 
 instance Show ConstellationPresetConf where
   show cpc = joinColon [quant, bandwidth, presets]
-    where joinColon = concat . intersperse ":"
+    where joinColon = intercalate ":"
           freqs     = cpc ^. cpcFreqPresets
           quant     = show $ cpc ^. cpcQuantization
           bandwidth = show $ cpc ^. cpcBandwidth
-          presets   = if (length $ freqs) == 0
+          presets   = if null freqs
                       then ""
                       else joinColon ("SETS" : map show freqs)
 
@@ -236,11 +236,11 @@ $(makeLenses ''ConstellationFreqConf)
 
 instance Show ConstellationFreqConf where
   show cfc = joinColon [quant, bandwidth, presets]
-    where joinColon = concat . intersperse ":"
+    where joinColon = intercalate ":"
           freqs     = cfc ^. cfcFrequencies
           quant     = show $ cfc ^. cfcQuantization
           bandwidth = show $ cfc ^. cfcBandwidth
-          presets   = if (length $ freqs) == 0
+          presets   = if null freqs
                       then ""
                       else joinColon ("FREQ" : map show freqs)
 
