@@ -492,59 +492,8 @@ confConstellationFreq cc = command ("CONF:CONS:" <> showToBs cc) parseConsFreq
 confQuery :: MonadTcpCtx c m => m ByteString
 confQuery = command "CONF:?" parseUntilPrompt
 
-a'' :: ByteString
-a'' = "\255\253\SOH\255\253!\255\251\SOH\255\251\ETX\ESC[0m\r\r\n\ESC[0mLABSAT_V3 >"
-a' :: ByteString
-a' = "\255\253\SOH\255\253!\255\251\SOH\255\251\ETX\r\r\nLABSAT_V3 >"
-b' :: ByteString
-b' = "HELP\r\r\nCurrent commands are : \r\r\n\r\r\n\ESC[1mHELP\ESC[22m\r\r\n\ESC[1mTYPE\ESC[22m\r\r\n\ESC[1mFIND\ESC[22m\r\r\n\ESC[1mMON\ESC[22m\r\r\n\ESC[1mPLAY\ESC[22m\r\r\n\ESC[1mREC\ESC[22m\r\r\n\ESC[1mATTN\ESC[22m\r\r\n\ESC[1mCONF\ESC[22m\r\r\n\ESC[1mMEDIA\ESC[22m\r\r\n\ESC[1mMUTE\ESC[22m\r\r\n\r\r\n\ESC[0m\r\r\n\ESC[0mLABSAT_V3 >\r\r\n\ESC[0m\r\r\n\ESC[0mLABSAT_V3 >"
-c' :: ByteString
-c' = "HELP\r\r\nCurrent commands are : \r\r\n\r\r\nHELP\r\r\nTYPE\r\r\nFIND\r\r\nMON\r\r\nPLAY\r\r\nREC\r\r\nATTN\r\r\nCONF\r\r\nMEDIA\r\r\nMUTE\r\r\n\r\r\n\r\r\nLABSAT_V3 >\r\r\n\r\r\nLABSAT_V3 >\r\r\n\r\r\nLABSAT_V3 >"
-d' :: ByteString
-d' = "\255\253\SOH\255\253!\255\251\SOH\255\251\ETXin use with 10.11.21.166\r\r\n"
-ee' :: ByteString
-ee' = "MEDIA:LIST\r\r\nABC \ESC[40G 00:00:00\r\r\nASDF\r\r\nFile_001 \ESC[40G 00:05:40\r\r\nFile_002 \ESC[40G 00:21:17\r\r\nLabSat 3 Wideband Demo SSD files\r\r\n\r\r\nLABSAT_V3 >"
-f' :: ByteString
-f' = "File_002 \ESC[40G 00:21:17\r\r\nLabSat 3 Wideband Demo SSD files\r\r\n\r\r\nLABSAT_V3 >"
-g' :: ByteString
-g' = "PLAY:FILE:File_001\r\r\nFile_001\r\r\n\r\r\nLABSAT_V3 >"
-j' :: ByteString
-j' = "PLAY:?\r\r\nPLAY:/mnt/sata/File_001:DUR:00:00:20\r\r\n\r\r\nLABSAT_V3 >"
-k' :: ByteString
-k' = "PLAY:?\r\r\nPLAY:IDLE\r\r\n\r\r\nLABSAT_V3 >"
-
-cno :: ByteString
-cno = "GPS 9\r\r\n05,42,07,52,08,43,09,52,16,35,23,47,27,43,28,42,30,49\r\r\n\r\r\nGLO 10\r\r\n01,50,02,52,03,36,08,37,10,36,11,50,12,50,13,32,20,31,21,40\r\r\n\r\r\nBDS 0\r\r\n\r\r\nGAL 4\r\r\n01,44,04,42,19,44,20,36\r\r\n\r\r\n"
-
-
-attn0 :: ByteString
-attn0 = "OK:ATTN:CH1:-10 \r\r\nOK:ATTN:CH2:-10 \r\r\nOK:ATTN:CH3:-10 \r\r\nOK\r\r\n\r\r\nLABSAT_V3 >"
-
-attn1 :: ByteString
-attn1 = "OK:ATTN:CH1:0 \r\r\nOK:ATTN:CH2:0 \r\r\nOK:ATTN:CH3:0 \r\r\nOK\r\r\n\r\r\nLABSAT_V3 >"
-
-attn2 :: ByteString
-attn2 = "OK:ATTN:CH1:-20 \r\r\nOK:ATTN:CH2:-10 \r\r\nOK\r\r\n\r\r\nLABSAT_V3 >"
-
-attn3 :: ByteString
-attn3 = "OK:ATTN:CH1:0 \r\r\nOK:ATTN:CH2:0 \r\r\nOK\r\r\n\r\r\nLABSAT_V3 >"
-
-attn4 :: ByteString
-attn4 = "OK:ATTN:CH1:0 \r\r\nOK:ATTN:CH2:0 \r\r\nOK:ATTN:CH3:0 \r\r\nOK\r\r\n\r\r\nLABSAT_V3 >"
-
-confcons :: ByteString
-confcons = "QUA-1, BW-10, Available ch(3) 3, 11, 13 \r\r\nOK\r\r\n\r\r\nLABSAT_V3 >"
-
--- Careful w/ the examples above. If there are escape codes in them, the examples below will barf
---main :: IO ()
---main = do
---  print $ parse (parseFirstLabsatMsg) a'
---  print $ parse (parseCommandAck "HELP" *> parseHelp) c'
---  print $ parse (parseCommandAck "MEDIA:LIST" *> parseMediaList) ee'
---  print $ parse (parseCommandAck "PLAY:FILE:File_001" *> (parsePlay "File_001")) g'
---  print $ parse (parseCommandAck "PLAY:?" *> parseIdle) k'
---  print $ parse (parseCommandAck "PLAY:?" *> parsePlaying) j'
-
+-- | Labsat Main
+--
 labsatMain :: MonadControl m => Text -> Int -> m ()
 labsatMain ip port= do
   putStrLn "yay"
