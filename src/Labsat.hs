@@ -113,8 +113,7 @@ testCommand :: (MonadStatsCtx c m, Show a) => ByteString -> Int -> TransT TcpCtx
 testCommand host port cmd =
   runGeneralTCPClient (clientSettings port host) $
     flip runTcpCtx $ do
-      msg0 <- receiveit parseFirstLabsatMsg
-      print msg0
+      _ <- receiveit parseFirstLabsatMsg
       res <- cmd
       print res
 
