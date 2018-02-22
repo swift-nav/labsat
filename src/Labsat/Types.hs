@@ -4,8 +4,6 @@
 
 module Labsat.Types where
 
-
-import Data.ByteString()
 import Data.Scientific
 import Preamble
 
@@ -16,6 +14,8 @@ newtype HelpCommands =
   HelpCommands [ByteString]
   deriving (Eq, Show)
 
+$(makePrisms ''HelpCommands)
+
 
 -- | Info: List of information returned by 'TYPE'
 --
@@ -23,6 +23,7 @@ newtype Info =
   Info [ByteString]
   deriving (Eq, Show)
 
+$(makePrisms ''Info)
 
 -- | PlayStatus: Playback status, Idle or Playing
 --
@@ -31,12 +32,16 @@ data PlayStatus =
   | PlayIdle
   deriving (Eq, Show)
 
+$(makePrisms ''PlayStatus)
+
 -- | RecordStatus: Recording status, Idle or Recording
 --
 data RecordStatus =
     Recording ByteString ByteString
   | RecordIdle
   deriving (Eq, Show)
+
+$(makePrisms ''RecordStatus)
 
 -- | PlayConf: Playback configuration
 --
@@ -99,24 +104,34 @@ data Media =
   | Dir ByteString
   deriving (Eq, Show)
 
+$(makePrisms ''Media)
+
 -- | MediaList: List of files and directories
 --
 newtype MediaList =
   MediaList [Media]
   deriving (Eq, Show)
 
+$(makePrisms ''MediaList)
+
 -- | Media type
 --
 data MediaType = USB | SD | SATA
   deriving (Eq, Show)
 
+$(makePrisms ''MediaType)
+
 -- | Digital Function type
 data DigitalFunction = OFF | CAN1 | CAN2 | RS232 | DIGI1 | DIGI2 | OnePPS
   deriving (Eq, Show)
 
+$(makePrisms ''DigitalFunction)
+
 -- | CAN Bus Channel
 --
 data CANChannel = CAN_CH1 | CAN_CH2
+
+$(makePrisms ''CANChannel)
 
 instance Show CANChannel where
   show CAN_CH1 = "CH1"
@@ -127,6 +142,8 @@ instance Show CANChannel where
 data Bandwidth = BW_10 | BW_30 | BW_56
   deriving (Eq)
 
+$(makePrisms ''Bandwidth)
+
 instance Show Bandwidth where
   show BW_10 = "BW:10"
   show BW_30 = "BW:30"
@@ -136,6 +153,8 @@ instance Show Bandwidth where
 --
 data Quantization = QUA1 | QUA2 | QUA3
   deriving (Eq)
+
+$(makePrisms ''Quantization)
 
 instance Show Quantization where
   show QUA1 = "QUA:1"
@@ -161,6 +180,8 @@ data FreqPreset =
   | LBand
   | UnknownPreset ByteString
   deriving (Eq)
+
+$(makePrisms ''FreqPreset)
 
 instance Show FreqPreset where
   show Beidou1           = "5"
@@ -253,12 +274,15 @@ data Constellation
   | GPS        -- ^ US NAVSTAR GPS
   deriving (Eq, Show)
 
+$(makePrisms ''Constellation)
 
 -- | Satellite CNO: Carrier-to-noise ration for a satellite
 --
 data SatelliteCNO =
   SatelliteCNO ByteString ByteString
   deriving (Eq, Show)
+
+$(makePrisms ''SatelliteCNO)
 
 
 -- | CNO: Carrier-to-noise ratio for a constellation
@@ -267,14 +291,18 @@ data ConstellationCNO =
   ConstellationCNO Constellation ByteString [SatelliteCNO]
   deriving (Eq, Show)
 
+$(makePrisms ''ConstellationCNO)
 
 -- | Location
 --
 data Location = Location
-  {
+  { -- GPS Time
     _time      :: Double
+    -- Elevation (meters, direction)
   , _height    :: (Double, ByteString)
+    -- Lattitude (degrees, direction)
   , _lattitude :: (Double, ByteString)
+    -- Longitude (degrees, direction)
   , _longitude :: (Double, ByteString)
   } deriving (Eq, Show)
 
