@@ -1,7 +1,9 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Labsat.Parser where
+module Test.Labsat.Parser
+  ( tests
+  ) where
 
 import Data.Attoparsec.ByteString
 import Data.ByteString
@@ -70,9 +72,6 @@ testPlay =
 --------------------------------------------------------------------------------
 -- REC Parsers
 --------------------------------------------------------------------------------
-recordFileOutput :: ByteString
-recordFileOutput = "File_004\r\r\n\r\r\nLABSAT_V3 >"
-
 statusRecordingOutput :: ByteString
 statusRecordingOutput = "REC:/mnt/sata/File_004:DUR:00:00:08\r\r\n\r\r\nLABSAT_V3 >"
 

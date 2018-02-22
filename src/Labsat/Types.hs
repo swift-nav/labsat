@@ -4,6 +4,7 @@
 
 module Labsat.Types where
 
+
 import Data.ByteString()
 import Data.Scientific
 import Preamble
