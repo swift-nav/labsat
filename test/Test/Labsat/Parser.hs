@@ -116,10 +116,10 @@ monSatResult :: [ConstellationCNO]
 monSatResult = [ConstellationCNO GPS "9" [SatelliteCNO "05" "42",SatelliteCNO "07" "52",SatelliteCNO "08" "43",SatelliteCNO "09" "52",SatelliteCNO "16" "35",SatelliteCNO "23" "47",SatelliteCNO "27" "43",SatelliteCNO "28" "42",SatelliteCNO "30" "49"],ConstellationCNO GLO "10" [SatelliteCNO "01" "50",SatelliteCNO "02" "52",SatelliteCNO "03" "36",SatelliteCNO "08" "37",SatelliteCNO "10" "36",SatelliteCNO "11" "50",SatelliteCNO "12" "50",SatelliteCNO "13" "32",SatelliteCNO "20" "31",SatelliteCNO "21" "40"],ConstellationCNO BDS "0" [],ConstellationCNO GAL "4" [SatelliteCNO "01" "44",SatelliteCNO "04" "42",SatelliteCNO "19" "44",SatelliteCNO "20" "36"]]
 
 monLocOutput :: ByteString
-monLocOutput = "223541.00,-5.800000,M,3746.26241,N,12224.19037,W\r\r\n\r\r\nLABSAT_V3 >"
+monLocOutput = "123456.00,-5.800000,M,1234.12345,N,54321.54321,W\r\r\n\r\r\nLABSAT_V3 >"
 
 monLocResult :: Location
-monLocResult = Location {_time = 223541.0, _height = (-5.8,"M"), _lattitude = (3746.26241,"N"), _longitude = (12224.19037,"W")}
+monLocResult = Location {_time = 123456.0, _height = (-5.8,"M"), _lattitude = (1234.12345,"N"), _longitude = (54321.54321,"W")}
 
 testMon :: TestTree
 testMon =
