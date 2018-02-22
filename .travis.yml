@@ -20,4 +20,4 @@ install:
 
 script:
   - ./Shakefile.hs sanity
-  - ./Shakefile.hs test
+  - stack test
