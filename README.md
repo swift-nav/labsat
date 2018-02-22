@@ -66,6 +66,12 @@ To build, install, run, and test `labsat`, the following dependencies may be req
 + [stack][stack]
 
 
+## LICENSE
+
+Copyright © 2018 Swift Navigation
+
+Distributed under MIT License. See [LICENSE](LICENSE)
+
 [stack]:       https://docs.haskellstack.org/en/stable/README/#how-to-install
 [travis]:      https://travis-ci.com/swift-nav/labsat
 [travis-img]:  https://img.shields.io/travis/swift-nav/labsat/master.svg?style=flat
