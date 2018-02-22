@@ -35,6 +35,30 @@ Playing "File_001" "00:00:03"
 PlayIdle
 ```
 
+
+## Development
+
+`labsat` has a shakefile/makefile to provide convience around building and testing:
+
+    # build the project's libraries, executables, and tests
+    $ ./Shakefile.hs build-tests-error
+
+    # test the project
+    $ ./Shakefile.hs tests-error
+
+    # start an interpreter with the project's libraries, executables, and tests loaded
+    $ ./Shakefile.hs ghci-tests
+
+    # install the project's executables
+    $ ./Shakefile.hs install
+
+    # clean the project
+    $ ./Shakefile.hs clean
+
+    # lint the project source code
+    $ ./Shakefile.hs lint
+
+
 ## Dependencies
 
 To build, install, run, and test `labsat`, the following dependencies may be required:
