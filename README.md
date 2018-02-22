@@ -43,5 +43,5 @@ To build, install, run, and test `labsat`, the following dependencies may be req
 
 
 [stack]:       https://docs.haskellstack.org/en/stable/README/#how-to-install
-[travis]:      https://travis-ci.org/swift-nav/labsat
+[travis]:      https://travis-ci.com/swift-nav/labsat
 [travis-img]:  https://img.shields.io/travis/swift-nav/labsat/master.svg?style=flat
