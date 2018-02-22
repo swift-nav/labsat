@@ -43,7 +43,7 @@ colorStripper :: MonadIO m => Conduit ByteString m ByteString
 colorStripper = do
   mx <- await
   case mx of
-    Nothing -> return ()
+    Nothing -> pure ()
     Just bs ->
       case BS.findIndex isEscape bs of
         Nothing -> do
@@ -252,10 +252,10 @@ nmeaOff = okCommand "MON:NMEA:OFF"
 --
 nmeaLog :: (MonadIO m, MonadTcpCtx c m) => Int -> FilePath -> m ()
 nmeaLog n f = do
-  void $ nmeaOn
+  void nmeaOn
   race_ (threadDelay $ n * 1000000) $ logResp f
-  void $ nmeaOff
-  return ()
+  void nmeaOff
+  pure ()
 
 -- | MON:LOC command.
 --

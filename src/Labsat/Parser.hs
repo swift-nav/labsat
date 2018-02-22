@@ -86,7 +86,7 @@ parseUntilPrompt = BS.pack <$> manyTill anyWord8 prompt
 parseThroughPrompt :: Parser ByteString
 parseThroughPrompt = do
   x <- parseUntilPrompt
-  return $ x <> "LABSAT_V3 >"
+  pure $ x <> "LABSAT_V3 >"
 
 -- | Parse echoed command followed by newline(s)
 --
@@ -100,7 +100,7 @@ parseColorSeq = do
   esc <- string "\ESC["
   n <- takeDigits
   m <- string "m"
-  return $ BS.concat [esc, n, m]
+  pure $ BS.concat [esc, n, m]
 
 -- | Parse Labsat header
 --
@@ -119,7 +119,7 @@ parseIP = do
   octet3 <- takeDigits
   void $ char '.'
   octet4 <- takeDigits
-  return $ intercalate "." [octet1, octet2, octet3, octet4]
+  pure $ intercalate "." [octet1, octet2, octet3, octet4]
 
 -- | Parse Duration HH:MM:SS
 --
@@ -130,7 +130,7 @@ parseDuration = do
   mm <- takeWhile isDigit_w8
   void $ char ':'
   ss <- takeWhile isDigit_w8
-  return $ intercalate ":" [hh, mm, ss]
+  pure $ intercalate ":" [hh, mm, ss]
 
 -- | Parse In Use Error
 --
@@ -178,8 +178,8 @@ parsePlayFile = string
 
 parsePlayIdle :: Parser PlayStatus
 parsePlayIdle = do
-  void $ "PLAY:IDLE"
-  return PlayIdle
+  void "PLAY:IDLE"
+  pure PlayIdle
 
 parsePlaying :: Parser PlayStatus
 parsePlaying =
@@ -202,8 +202,8 @@ parseRec = takeWhile notNewline <* takeNewlines <* prompt
 
 parseRecordIdle :: Parser RecordStatus
 parseRecordIdle = do
-  void $ "REC:IDLE"
-  return RecordIdle
+  void "REC:IDLE"
+  pure RecordIdle
 
 parseRecording :: Parser RecordStatus
 parseRecording =
@@ -230,17 +230,17 @@ parseInfo = Info <$> parseLabsatLines
 --
 parseConstellation :: Parser Constellation
 parseConstellation =
-  (string "GPS" >> return GPS) <|>
-  (string "GLO" >> return GLO) <|>
-  (string "BDS" >> return BDS) <|>
-  (string "GAL" >> return GAL)
+  (string "GPS" >> pure GPS) <|>
+  (string "GLO" >> pure GLO) <|>
+  (string "BDS" >> pure BDS) <|>
+  (string "GAL" >> pure GAL)
 
 -- | Satellite CNO parser.
 --
 parseSatelliteCNO :: Parser [SatelliteCNO]
 parseSatelliteCNO = do
   res <- option [] (commaSep takeDigits <* takeNewlines)
-  return $ uncurry SatelliteCNO <$>  extractSatelliteCNOPairs res
+  pure $ uncurry SatelliteCNO <$>  extractSatelliteCNOPairs res
     where
       extractSatelliteCNOPairs :: [ByteString] -> [(ByteString, ByteString)]
       extractSatelliteCNOPairs [] = []
@@ -280,7 +280,7 @@ parseMonSat = manyTill parseConstellationCNO prompt
 parseAttn :: Parser AttnConf
 parseAttn =
   AttnConf <$>
-    return Nothing <*>
+    pure Nothing <*>
     parseChannelAttn "CH1" <*>
     parseChannelAttn "CH2" <*>
     parseChannelAttn "CH3" <* ok <* takeNewlines <* prompt
@@ -299,15 +299,15 @@ parseCANBaud = "baud value is " *> double <* " " <* takeNewlines <* okPrompt
 
 
 parseQuantization :: Parser Quantization
-parseQuantization = (string "QUA-1" >> return QUA1) <|>
-                    (string "QUA-2" >> return QUA2) <|>
-                    (string "QUA-3" >> return QUA3)
+parseQuantization = (string "QUA-1" >> pure QUA1) <|>
+                    (string "QUA-2" >> pure QUA2) <|>
+                    (string "QUA-3" >> pure QUA3)
 
 
 parseBandwidth :: Parser Bandwidth
-parseBandwidth = (string "BW-10" >> return BW_10) <|>
-                 (string "BW-30" >> return BW_30) <|>
-                 (string "BW-56" >> return BW_56)
+parseBandwidth = (string "BW-10" >> pure BW_10) <|>
+                 (string "BW-30" >> pure BW_30) <|>
+                 (string "BW-56" >> pure BW_56)
 
 -- | 'CONF:CONS' parsers
 --
@@ -322,7 +322,7 @@ parseConsPreset =
           parsePresets = do
             void $ string "Available ch(" <* takeDigits <* string ") "
             presets <- takeDigits `sepBy'` string ", " <* string " "
-            return $ freqPresetLookup <$> presets
+            pure $ freqPresetLookup <$> presets
 
 parseConsFreq :: Parser ConstellationFreqConf
 parseConsFreq =
