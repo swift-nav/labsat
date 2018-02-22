@@ -13,6 +13,7 @@ import           Data.Conduit
 import           Data.Conduit.Attoparsec
 import qualified Data.Conduit.Binary           as B
 import           Data.Conduit.Network
+import           Data.Text.Encoding               (encodeUtf8)
 import           Labsat.Ctx
 import           Labsat.Parser
 import           Labsat.Types
@@ -490,6 +491,14 @@ confQuery = command "CONF:?" parseUntilPrompt
 --
 labsatMain :: MonadControl m => Text -> Int -> m ()
 labsatMain ip port= do
-  putStrLn "yay"
+  putStrLn "Labsat!"
   print ip
   print port
+
+  -- Example
+  runCtx $ runStatsCtx $
+    runGeneralTCPClient (clientSettings port $ encodeUtf8 ip) $
+      flip runTcpCtx $ do
+        void $ receiveResp parseFirstLabsatMsg
+        resp <- info
+        print resp
