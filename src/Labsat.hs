@@ -108,7 +108,7 @@ testCommand :: (MonadStatsCtx c m, Show a) => ByteString -> Int -> TransT TcpCtx
 testCommand host port cmd =
   runGeneralTCPClient (clientSettings port host) $
     flip runTcpCtx $ do
-      _ <- receiveit parseFirstLabsatMsg
+      void $ receiveResp parseFirstLabsatMsg
       res <- cmd
       print res
 
@@ -252,9 +252,9 @@ nmeaOff = okCommand "MON:NMEA:OFF"
 --
 nmeaLog :: (MonadIO m, MonadTcpCtx c m) => Int -> FilePath -> m ()
 nmeaLog n f = do
-  _ <- nmeaOn
-  race_ (threadDelay $ n * 1000000) $ logit f
-  _ <- nmeaOff
+  void $ nmeaOn
+  race_ (threadDelay $ n * 1000000) $ logResp f
+  void $ nmeaOff
   return ()
 
 -- | MON:LOC command.

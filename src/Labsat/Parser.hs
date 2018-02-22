@@ -113,11 +113,11 @@ takeLabsatHeader = takeWhile1 (not . isETX) <* etx
 parseIP :: Parser ByteString
 parseIP = do
   octet1 <- takeDigits
-  _ <- char '.'
+  void $ char '.'
   octet2 <- takeDigits
-  _ <- char '.'
+  void $ char '.'
   octet3 <- takeDigits
-  _ <- char '.'
+  void $ char '.'
   octet4 <- takeDigits
   return $ intercalate "." [octet1, octet2, octet3, octet4]
 
@@ -126,9 +126,9 @@ parseIP = do
 parseDuration :: Parser ByteString
 parseDuration = do
   hh <- takeWhile isDigit_w8
-  _ <- char ':'
+  void $ char ':'
   mm <- takeWhile isDigit_w8
-  _ <- char ':'
+  void $ char ':'
   ss <- takeWhile isDigit_w8
   return $ intercalate ":" [hh, mm, ss]
 
@@ -178,7 +178,7 @@ parsePlayFile = string
 
 parsePlayIdle :: Parser PlayStatus
 parsePlayIdle = do
-  _ <- "PLAY:IDLE"
+  void $ "PLAY:IDLE"
   return PlayIdle
 
 parsePlaying :: Parser PlayStatus
@@ -202,7 +202,7 @@ parseRec = takeWhile notNewline <* takeNewlines <* prompt
 
 parseRecordIdle :: Parser RecordStatus
 parseRecordIdle = do
-  _ <- "REC:IDLE"
+  void $ "REC:IDLE"
   return RecordIdle
 
 parseRecording :: Parser RecordStatus
@@ -320,7 +320,7 @@ parseConsPreset =
     where parseQua   = parseQuantization <* ", "
           parseBW    = parseBandwidth <* ", "
           parsePresets = do
-            _ <- string "Available ch(" <* takeDigits <* string ") "
+            void $ string "Available ch(" <* takeDigits <* string ") "
             presets <- takeDigits `sepBy'` string ", " <* string " "
             return $ freqPresetLookup <$> presets
 
@@ -331,7 +331,7 @@ parseConsFreq =
           parseQua   = optHeader *> " " *> parseQuantization <* ", "
           parseBW    = parseBandwidth <* ", "
           parseFreqs = do
-            _ <- string "Available ch(" <* takeDigits <* string ") "
+            void $ string "Available ch(" <* takeDigits <* string ") "
             scientific `sepBy'` string ", " <* string " "
 
 
