@@ -30,17 +30,12 @@ withBinaryFile' f = flip bracket (liftIO . hClose) $ do
     liftIO $ hSetBuffering h LineBuffering
     pure h
 
--- | Send command
---
-sendit :: MonadTcpCtx c m => ByteString -> m ()
-sendit s = do
-  ad <- view catAppData
-  yield s $$ appSink ad
-
 -- | Add Labsat end-of-line delimiters and send command
 --
 sendCmd :: MonadTcpCtx c m => ByteString -> m ()
-sendCmd s = sendit (s ++ "\r\r\n")
+sendCmd s = do
+  ad <- view tcpAppData
+  yield (s <> "\r\r\n") $$ appSink ad
 
 -- | Strip ANSI color codes
 --
@@ -68,16 +63,16 @@ colorStripper = do
 
 -- | Receive command response and strip color codes
 --
-receiveit :: MonadTcpCtx c m => Parser a -> m a
-receiveit p = runResourceT $ do
-  ad <- view catAppData
+receiveResp :: MonadTcpCtx c m => Parser a -> m a
+receiveResp p = runResourceT $ do
+  ad <- view tcpAppData
   appSource ad =$= colorStripper $$ sinkParser p
 
 -- | Receive command response, strip color codes, and log to file
 --
-logit :: MonadTcpCtx c m => FilePath -> m ()
-logit lf = runResourceT $ do
-  ad <- view catAppData
+logResp :: MonadTcpCtx c m => FilePath -> m ()
+logResp lf = runResourceT $ do
+  ad <- view tcpAppData
   withBinaryFile' lf $ \lh ->
     appSource ad =$= colorStripper $$ B.sinkHandle lh
 
@@ -86,7 +81,7 @@ logit lf = runResourceT $ do
 command :: (MonadTcpCtx c m) => ByteString -> Parser a -> m a
 command c p = do
   sendCmd c
-  receiveit $ parseCommandAck c *> p
+  receiveResp $ parseCommandAck c *> p
 
 -- | Send a command and parse for OK and the prompt
 --
@@ -100,13 +95,13 @@ debugRecv msg host port =
   runCtx $ runStatsCtx $
     runGeneralTCPClient (clientSettings port host) $
       flip runTcpCtx $ do
-        msg0 <- receiveit parseUntilPrompt
+        msg0 <- receiveResp parseUntilPrompt
         putStrLn "First message:"
         print msg0
 
         putStrLn "Debug message:"
         sendCmd msg
-        res <- receiveit parseUntilPrompt
+        res <- receiveResp parseUntilPrompt
         print (res <> "LABSAT_V3 >")
 
 testCommand :: (MonadStatsCtx c m, Show a) => ByteString -> Int -> TransT TcpCtx m a -> m ()

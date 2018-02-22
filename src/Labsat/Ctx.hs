@@ -9,14 +9,14 @@ import Data.Conduit.Network (AppData)
 import Preamble
 
 data TcpCtx = TcpCtx
-  { _catStatsCtx :: StatsCtx
-  , _catAppData :: AppData
+  { _tcpStatsCtx :: StatsCtx
+  , _tcpAppData :: AppData
   }
 
 $(makeClassyConstraints ''TcpCtx [''HasStatsCtx])
 
 instance HasStatsCtx TcpCtx where
-  statsCtx = catStatsCtx
+  statsCtx = tcpStatsCtx
 
 instance HasCtx TcpCtx where
   ctx = statsCtx . ctx
