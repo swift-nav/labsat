@@ -74,4 +74,4 @@ Distributed under MIT License. See [LICENSE](LICENSE)
 
 [stack]:       https://docs.haskellstack.org/en/stable/README/#how-to-install
 [travis]:      https://travis-ci.com/swift-nav/labsat
-[travis-img]:  https://img.shields.io/travis/swift-nav/labsat/master.svg?style=flat
+[travis-img]:  https://travis-ci.org/swift-nav/labsat.svg?branch=master
