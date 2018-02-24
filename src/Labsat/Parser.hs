@@ -107,6 +107,13 @@ parseColorSeq = do
 takeLabsatHeader :: Parser ByteString
 takeLabsatHeader = takeWhile1 (not . isETX) <* etx
 
+-- | Parse Y/N
+--
+parseYN :: Parser Bool
+parseYN =
+  (string "Y" >> pure True) <|>
+  (string "N" >> pure False)
+
 -- | Parse IP address
 --
 -- | TODO make sure its a valid IP address
@@ -270,6 +277,24 @@ parseMonLoc = Location <$> double <* "," <*> parseLocation <* "," <*> parseLocat
 --
 parseMonSat :: Parser [ConstellationCNO]
 parseMonSat = manyTill parseConstellationCNO prompt
+
+--------------------------------------------------------------------------------
+-- MUTE Parsers
+--------------------------------------------------------------------------------
+
+-- | 'MUTE' parser
+--
+parseMute :: Parser MuteConf
+parseMute =
+  MuteConf <$>
+    pure Nothing <*>
+    parseChannelMute "CH1" <*>
+    parseChannelMute "CH2" <*>
+    parseChannelMute "CH3" <* ok <* takeNewlines <* prompt
+    where
+      parseChannelId ch = string $ "OK:MUTE:"++ch++":"
+      parseChannelMute ch = option Nothing (parseChannelId ch *> (Just <$> parseYN) <* optWhitespace)
+      optWhitespace = option "" " \r\r\n"
 
 --------------------------------------------------------------------------------
 -- ATTN Parsers

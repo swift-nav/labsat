@@ -307,15 +307,15 @@ mute b = okCommand ("MUTE:" <> boolToBs b)
 
 -- | MUTE command that supports individual channel control.
 --
-mute' :: MonadTcpCtx c m => MuteConf -> m ByteString
+mute' :: MonadTcpCtx c m => MuteConf -> m MuteConf
 mute' mc =
   case mc ^. mcMuteAll of
-    Just b  -> okCommand ("MUTE:" <> b2c b)
+    Just b  -> command ("MUTE:" <> b2c b) parseMute
     Nothing -> do
       let ch1 = fromMaybeBoolToMuteStr "CH1" $ mc ^. mcMuteCh1
           ch2 = fromMaybeBoolToMuteStr "CH2" $ mc ^. mcMuteCh2
           ch3 = fromMaybeBoolToMuteStr "CH3" $ mc ^. mcMuteCh3
-      okCommand ("MUTE:" <> ch1 <> ch2 <> ch3)
+      command ("MUTE:" <> ch1 <> ch2 <> ch3) parseMute
     where
       b2c = boolToBs
       fromMaybeBoolToMuteStr prefix m = case m of
