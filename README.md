@@ -5,6 +5,8 @@
 This package provides a wrapper around the LabSat3 Wideband TCP interface. It is tested against
 LabSat3 Wideband Firmware 1.0.260 FPGA 33.
 
+[LabSat 3 Wideband Documentation](https://racelogic.support/03LabSat_GPS_Simulators/LabSat_3_Wideband)
+
 
 ## Usage
 
