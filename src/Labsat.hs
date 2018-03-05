@@ -33,9 +33,9 @@ withBinaryFile' f = flip bracket (liftIO . hClose) $ do
 
 -- | Add Labsat end-of-line delimiters and send command
 --
-sendCmd :: MonadTcpCtx c m => ByteString -> m ()
+sendCmd :: MonadLabsatCtx c m => ByteString -> m ()
 sendCmd s = do
-  ad <- view tcpAppData
+  ad <- view lsAppData
   yield (s <> "\r\r\n") $$ appSink ad
 
 -- | Strip ANSI color codes
@@ -64,29 +64,29 @@ colorStripper = do
 
 -- | Receive command response and strip color codes
 --
-receiveResp :: MonadTcpCtx c m => Parser a -> m a
+receiveResp :: MonadLabsatCtx c m => Parser a -> m a
 receiveResp p = runResourceT $ do
-  ad <- view tcpAppData
+  ad <- view lsAppData
   appSource ad =$= colorStripper $$ sinkParser p
 
 -- | Receive command response, strip color codes, and log to file
 --
-logResp :: MonadTcpCtx c m => FilePath -> m ()
+logResp :: MonadLabsatCtx c m => FilePath -> m ()
 logResp lf = runResourceT $ do
-  ad <- view tcpAppData
+  ad <- view lsAppData
   withBinaryFile' lf $ \lh ->
     appSource ad =$= colorStripper $$ B.sinkHandle lh
 
 -- | Send a command and parser for its response.
 --
-command :: (MonadTcpCtx c m) => ByteString -> Parser a -> m a
+command :: (MonadLabsatCtx c m) => ByteString -> Parser a -> m a
 command c p = do
   sendCmd c
   receiveResp $ parseCommandAck c *> p
 
 -- | Send a command and parse for OK and the prompt
 --
-okCommand :: (MonadTcpCtx c m) => ByteString -> m ByteString
+okCommand :: (MonadLabsatCtx c m) => ByteString -> m ByteString
 okCommand = flip command okPrompt
 
 -- Swallow first message, capture and print second one (debug)
@@ -94,24 +94,22 @@ okCommand = flip command okPrompt
 debugRecv :: ByteString -> ByteString -> Int -> IO ()
 debugRecv msg host port =
   runCtx $ runStatsCtx $
-    runGeneralTCPClient (clientSettings port host) $
-      flip runTcpCtx $ do
-        msg0 <- receiveResp parseUntilPrompt
-        putStrLn "First message:"
-        print msg0
+    runLabsatCtx host port $ do
+      msg0 <- receiveResp parseUntilPrompt
+      putStrLn "First message:"
+      print msg0
 
-        putStrLn "Debug message:"
-        sendCmd msg
-        res <- receiveResp parseUntilPrompt
-        print (res <> "LABSAT_V3 >")
+      putStrLn "Debug message:"
+      sendCmd msg
+      res <- receiveResp parseUntilPrompt
+      print (res <> "LABSAT_V3 >")
 
-testCommand :: (MonadStatsCtx c m, Show a) => ByteString -> Int -> TransT TcpCtx m a -> m ()
+testCommand :: (MonadStatsCtx c m, Show a) => ByteString -> Int -> TransT LabsatCtx m a -> m ()
 testCommand host port cmd =
-  runGeneralTCPClient (clientSettings port host) $
-    flip runTcpCtx $ do
-      void $ receiveResp parseFirstLabsatMsg
-      res <- cmd
-      print res
+  runLabsatCtx host port $ do
+    void $ receiveResp parseFirstLabsatMsg
+    res <- cmd
+    print res
 
 --------------------------------------------------------------------------------
 -- Commands
@@ -146,7 +144,7 @@ showToBs = C.pack . show
 
 -- | HELP command.
 --
-help :: MonadTcpCtx c m => m HelpCommands
+help :: MonadLabsatCtx c m => m HelpCommands
 help = command "HELP" parseHelp
 
 --------------------------------------------------------------------------------
@@ -155,37 +153,37 @@ help = command "HELP" parseHelp
 
 -- | MEDIA:LIST command.
 --
-mediaList :: MonadTcpCtx c m => m MediaList
+mediaList :: MonadLabsatCtx c m => m MediaList
 mediaList = command "MEDIA:LIST" parseMediaList
 
 -- | MEDIA:CHDIR:\ command.
 --
-mediaChdirRoot :: MonadTcpCtx c m => m ByteString
+mediaChdirRoot :: MonadLabsatCtx c m => m ByteString
 mediaChdirRoot = command "MEDIA:CHDIR:\\" parseMediaChdir
 
 -- | MEDIA:CHDIR:.. command.
 --
-mediaChdirUp :: MonadTcpCtx c m => m ByteString
+mediaChdirUp :: MonadLabsatCtx c m => m ByteString
 mediaChdirUp = command "MEDIA:CHDIR:.." parseMediaChdir
 
 -- | MEDIA:CHDIR:<dir> command.
 --
-mediaChdir :: MonadTcpCtx c m => ByteString -> m ByteString
+mediaChdir :: MonadLabsatCtx c m => ByteString -> m ByteString
 mediaChdir d = command ("MEDIA:CHDIR:" <> d) parseMediaChdir
 
 -- | MEDIA:PROTECT:Y/N:FILE command.
 --
-mediaProtect :: MonadTcpCtx c m => Bool -> ByteString -> m ByteString
+mediaProtect :: MonadLabsatCtx c m => Bool -> ByteString -> m ByteString
 mediaProtect b f = okCommand $ "MEDIA:PROTECT:" <> bool "N:" "Y:" b <> f
 
 -- | MEDIA:DELETE:FILE command.
 --
-mediaDelete :: MonadTcpCtx c m => ByteString -> m ByteString
+mediaDelete :: MonadLabsatCtx c m => ByteString -> m ByteString
 mediaDelete f = okCommand $ "MEDIA:DELETE:" <> f
 
 -- | MEDIA:SELECT:SD/USB/SATA command.
 --
-mediaSelect :: MonadTcpCtx c m => MediaType -> m ByteString
+mediaSelect :: MonadLabsatCtx c m => MediaType -> m ByteString
 mediaSelect s = okCommand $ "MEDIA:SELECT:" <> showToBs s
 
 --------------------------------------------------------------------------------
@@ -194,12 +192,12 @@ mediaSelect s = okCommand $ "MEDIA:SELECT:" <> showToBs s
 
 -- | PLAY command.
 --
-play :: MonadTcpCtx c m => ByteString -> m ByteString
+play :: MonadLabsatCtx c m => ByteString -> m ByteString
 play f = command ("PLAY:FILE:" <> f) (parsePlay f)
 
 -- | PLAY command that supports FOR and FROM
 --
-play' :: MonadTcpCtx c m => PlayConf -> m ByteString
+play' :: MonadLabsatCtx c m => PlayConf -> m ByteString
 play' pc = command cmd (parsePlay file')
   where
     for'  = argFromMaybe ":FOR:"  $ pc ^.pcFor
@@ -209,12 +207,12 @@ play' pc = command cmd (parsePlay file')
 
 -- | PLAY:STOP command.
 --
-playStop :: MonadTcpCtx c m => m ByteString
+playStop :: MonadLabsatCtx c m => m ByteString
 playStop = okCommand "PLAY:STOP"
 
 -- | PLAY:? command.
 --
-playStatus :: MonadTcpCtx c m => m PlayStatus
+playStatus :: MonadLabsatCtx c m => m PlayStatus
 playStatus = command "PLAY:?" parsePlayStatus
 
 --------------------------------------------------------------------------------
@@ -223,7 +221,7 @@ playStatus = command "PLAY:?" parsePlayStatus
 
 -- | TYPE command. Named 'info' to avoid the obvious conflict.
 --
-info :: MonadTcpCtx c m => m Info
+info :: MonadLabsatCtx c m => m Info
 info = command "TYPE" parseInfo
 
 --------------------------------------------------------------------------------
@@ -232,7 +230,7 @@ info = command "TYPE" parseInfo
 
 -- | FIND command.
 --
-find :: MonadTcpCtx c m => m ByteString
+find :: MonadLabsatCtx c m => m ByteString
 find = okCommand "FIND"
 
 --------------------------------------------------------------------------------
@@ -241,17 +239,17 @@ find = okCommand "FIND"
 
 -- | MON:NMEA:ON command.
 --
-nmeaOn :: MonadTcpCtx c m => m ByteString
+nmeaOn :: MonadLabsatCtx c m => m ByteString
 nmeaOn = okCommand "MON:NMEA:ON"
 
 -- | MON:NMEA:OFF command.
 --
-nmeaOff :: MonadTcpCtx c m => m ByteString
+nmeaOff :: MonadLabsatCtx c m => m ByteString
 nmeaOff = okCommand "MON:NMEA:OFF"
 
 -- | Capture NMEA log for 'n' seconds
 --
-nmeaLog :: (MonadIO m, MonadTcpCtx c m) => Int -> FilePath -> m ()
+nmeaLog :: (MonadIO m, MonadLabsatCtx c m) => Int -> FilePath -> m ()
 nmeaLog n f = do
   void nmeaOn
   race_ (threadDelay $ n * 1000000) $ logResp f
@@ -260,12 +258,12 @@ nmeaLog n f = do
 
 -- | MON:LOC command.
 --
-monLoc :: MonadTcpCtx c m => m Location
+monLoc :: MonadLabsatCtx c m => m Location
 monLoc = command "MON:LOC" parseMonLoc
 
 -- | MON:SAT command.
 --
-monSat :: MonadTcpCtx c m => m [ConstellationCNO]
+monSat :: MonadLabsatCtx c m => m [ConstellationCNO]
 monSat = command "MON:SAT" parseMonSat
 
 --------------------------------------------------------------------------------
@@ -274,12 +272,12 @@ monSat = command "MON:SAT" parseMonSat
 
 -- | REC command.
 --
-rec :: MonadTcpCtx c m => m ByteString
+rec :: MonadLabsatCtx c m => m ByteString
 rec = command "REC" parseRec
 
 -- | REC command that supports FILE and FOR.
 --
-rec' :: MonadTcpCtx c m => RecordConf -> m ByteString
+rec' :: MonadLabsatCtx c m => RecordConf -> m ByteString
 rec' rc = command cmd parseRec
   where
     file' = argFromMaybe ":FILE:" $ rc ^. rcFile
@@ -288,12 +286,12 @@ rec' rc = command cmd parseRec
 
 -- | REC:STOP command.
 --
-recStop :: MonadTcpCtx c m => m ByteString
+recStop :: MonadLabsatCtx c m => m ByteString
 recStop = okCommand "REC:STOP"
 
 -- | REC:? command.
 --
-recStatus :: MonadTcpCtx c m => m RecordStatus
+recStatus :: MonadLabsatCtx c m => m RecordStatus
 recStatus = command "REC:?" parseRecordStatus
 
 --------------------------------------------------------------------------------
@@ -302,12 +300,12 @@ recStatus = command "REC:?" parseRecordStatus
 
 -- | MUTE command.
 --
-mute :: MonadTcpCtx c m => Bool -> m ByteString
+mute :: MonadLabsatCtx c m => Bool -> m ByteString
 mute b = okCommand ("MUTE:" <> boolToBs b)
 
 -- | MUTE command that supports individual channel control.
 --
-mute' :: MonadTcpCtx c m => MuteConf -> m MuteConf
+mute' :: MonadLabsatCtx c m => MuteConf -> m MuteConf
 mute' mc =
   case mc ^. mcMuteAll of
     Just b  -> command ("MUTE:" <> b2c b) parseMute
@@ -328,12 +326,12 @@ mute' mc =
 
 -- | ATTN command.
 --
-attn :: MonadTcpCtx c m => Int -> m AttnConf
+attn :: MonadLabsatCtx c m => Int -> m AttnConf
 attn i = command ("ATTN:" <> intToBs i) parseAttn
 
 -- | ATTN command that supports individual channel control.
 --
-attn' :: MonadTcpCtx c m => AttnConf -> m AttnConf
+attn' :: MonadLabsatCtx c m => AttnConf -> m AttnConf
 attn' ac =
   case ac ^. acAttnAll of
     Just i  -> command ("ATTN:" <> intToBs i) parseAttn
@@ -353,69 +351,69 @@ attn' ac =
 
 -- | CONF:PLAY:LOOP command.
 --
-confPlayLoop :: MonadTcpCtx c m => Bool -> m ByteString
+confPlayLoop :: MonadLabsatCtx c m => Bool -> m ByteString
 confPlayLoop b = okCommand ("CONF:PLAY:LOOP:" <> boolToBs b)
 
 -- | CONF:PLAY:PAUSE command.
 --
-confPlayPause :: MonadTcpCtx c m => Int -> m ByteString
+confPlayPause :: MonadLabsatCtx c m => Int -> m ByteString
 confPlayPause i = okCommand ("CONF:PLAY:PAUSE:" <> intToBs i)
 
 -- | CONF:PLAY:FOR command.
 --
-confPlayFor :: MonadTcpCtx c m => Int -> m ByteString
+confPlayFor :: MonadLabsatCtx c m => Int -> m ByteString
 confPlayFor i = okCommand ("CONF:PLAY:FOR:" <> intToBs i)
 
 -- | CONF:PLAY:FROM command.
 --
-confPlayFrom :: MonadTcpCtx c m => Int -> m ByteString
+confPlayFrom :: MonadLabsatCtx c m => Int -> m ByteString
 confPlayFrom i = okCommand ("CONF:PLAY:FROM:" <> intToBs i)
 
 -- | CONF:PLAY:FOR:FROM command.
 --
-confPlayForFrom :: MonadTcpCtx c m => Int -> Int -> m ByteString
+confPlayForFrom :: MonadLabsatCtx c m => Int -> Int -> m ByteString
 confPlayForFrom i j = okCommand ("CONF:PLAY:FOR:" <> intToBs i <> ":FROM:" <> intToBs j)
 
 -- | CONF:REC:FOR command.
 --
-confRecFor :: MonadTcpCtx c m => Int -> m ByteString
+confRecFor :: MonadLabsatCtx c m => Int -> m ByteString
 confRecFor i = okCommand ("CONF:REC:FOR:" <> intToBs i)
 
 -- | CONF:SETUP:DISP:CONT command.
 --
-confContrast :: MonadTcpCtx c m => Int -> m ByteString
+confContrast :: MonadLabsatCtx c m => Int -> m ByteString
 confContrast i = okCommand ("CONF:SETUP:DISP:CONT:" <> intToBs i)
 
 -- | CONF:SETUP:DISP:BRIG command.
 --
-confBrightness :: MonadTcpCtx c m => Int -> m ByteString
+confBrightness :: MonadLabsatCtx c m => Int -> m ByteString
 confBrightness i = okCommand ("CONF:SETUP:DISP:BRIG:" <> intToBs i)
 
 -- | CONF:SETUP:PSAV command.
 --
-confPsav :: MonadTcpCtx c m => Bool -> m ByteString
+confPsav :: MonadLabsatCtx c m => Bool -> m ByteString
 confPsav b = okCommand ("CONF:SETUP:PSAV:" <> boolToBs b)
 
 -- | CONF:SETUP:SYNC command.
 --
-confSync :: MonadTcpCtx c m => Bool -> m ByteString
+confSync :: MonadLabsatCtx c m => Bool -> m ByteString
 confSync b = okCommand ("CONF:SETUP:SYNC:" <> boolToBs b)
 
 
 -- | CONF:SETUP:BEEP command.
 --
-confBeep :: MonadTcpCtx c m => Bool -> m ByteString
+confBeep :: MonadLabsatCtx c m => Bool -> m ByteString
 confBeep b = okCommand ("CONF:SETUP:BEEP:" <> boolToBs b)
 
 
 -- | CONF:SETUP:TIME:UTC command.
 --
-confTimeUTC :: MonadTcpCtx c m => m ByteString
+confTimeUTC :: MonadLabsatCtx c m => m ByteString
 confTimeUTC = okCommand "CONF:SETUP:TIME:UTC:Y"
 
 -- | CONF:SETUP:TIME:MAN command.
 --
-confTimeManual :: MonadTcpCtx c m
+confTimeManual :: MonadLabsatCtx c m
                => ByteString
                -> ByteString
                -> ByteString
@@ -428,63 +426,63 @@ confTimeManual year month day hours minutes seconds =
 
 -- | CONF:SETUP:DIGI command.
 --
-confDigi :: MonadTcpCtx c m => CANChannel -> DigitalFunction -> m ByteString
+confDigi :: MonadLabsatCtx c m => CANChannel -> DigitalFunction -> m ByteString
 confDigi ch df = okCommand ("CONF:SETUP:DIGI:" <> showToBs ch <> ":" <> showToBs df)
 
 -- | CONF:SETUP:CAN:CH*:BAUD command.
 --
-confCANBaud :: MonadTcpCtx c m => CANChannel -> Double -> m Double
+confCANBaud :: MonadLabsatCtx c m => CANChannel -> Double -> m Double
 confCANBaud ch val = command ("CONF:SETUP:CAN:" <> showToBs ch <> ":BAUD:" <> showToBs val) parseCANBaud
 
 
 -- | CONF:SETUP:CAN:SILENT command.
 --
-confCANSilent :: MonadTcpCtx c m => Bool -> m ByteString
+confCANSilent :: MonadLabsatCtx c m => Bool -> m ByteString
 confCANSilent b = okCommand ("CONF:SETUP:CAN:SILENT:" <> boolToBs b)
 
 -- | CONF:SETUP:CAN:LOGFILE command.
 --
-confCANLogfile :: MonadTcpCtx c m => Bool -> m ByteString
+confCANLogfile :: MonadLabsatCtx c m => Bool -> m ByteString
 confCANLogfile b = okCommand ("CONF:SETUP:CAN:LOGFILE:" <> boolToBs b)
 
 -- | CONF:SETUP:CAN:REPLAYFILE command.
 --
-confCANReplayfile :: MonadTcpCtx c m => Bool -> m ByteString
+confCANReplayfile :: MonadLabsatCtx c m => Bool -> m ByteString
 confCANReplayfile b = okCommand ("CONF:SETUP:CAN:REPLAYFILE:" <> boolToBs b)
 
 -- | CONF:SETUP:CLKREF:OCXO command.
 --
-confClkRefOCXO :: MonadTcpCtx c m => m ByteString
+confClkRefOCXO :: MonadLabsatCtx c m => m ByteString
 confClkRefOCXO = okCommand "CONF:SETUP:CLKREF:OCXO"
 
 -- | CONF:SETUP:CLKREF:TCXO command.
 --
-confClkRefTCXO :: MonadTcpCtx c m => m ByteString
+confClkRefTCXO :: MonadLabsatCtx c m => m ByteString
 confClkRefTCXO = okCommand "CONF:SETUP:CLKREF:TCXO"
 
 -- | CONF:SETUP:CLKREF:EXT command.
 --
-confClkRefEXT :: MonadTcpCtx c m => m ByteString
+confClkRefEXT :: MonadLabsatCtx c m => m ByteString
 confClkRefEXT = okCommand "CONF:SETUP:CLKREF:EXT"
 
 -- | CONF:SETUP:CLKREF:REFOUT command.
 --
-confClkRefout :: MonadTcpCtx c m => Bool -> m ByteString
+confClkRefout :: MonadLabsatCtx c m => Bool -> m ByteString
 confClkRefout b = okCommand ("CONF:SETUP:CLKREF:REFOUT:" <> boolToBs b)
 
 -- | CONF:CONS command.
 --
-confConstellationPreset :: MonadTcpCtx c m => ConstellationPresetConf -> m ConstellationPresetConf
+confConstellationPreset :: MonadLabsatCtx c m => ConstellationPresetConf -> m ConstellationPresetConf
 confConstellationPreset cc = command ("CONF:CONS:" <> showToBs cc) parseConsPreset
 
 -- | CONF:CONS command.
 --
-confConstellationFreq :: MonadTcpCtx c m => ConstellationFreqConf -> m ConstellationFreqConf
+confConstellationFreq :: MonadLabsatCtx c m => ConstellationFreqConf -> m ConstellationFreqConf
 confConstellationFreq cc = command ("CONF:CONS:" <> showToBs cc) parseConsFreq
 
 -- | CONF:? command.
 --
-confQuery :: MonadTcpCtx c m => m ByteString
+confQuery :: MonadLabsatCtx c m => m ByteString
 confQuery = command "CONF:?" parseUntilPrompt
 
 -- | Labsat Main
@@ -497,8 +495,7 @@ labsatMain ip port= do
 
   -- Example
   runCtx $ runStatsCtx $
-    runGeneralTCPClient (clientSettings port $ encodeUtf8 ip) $
-      flip runTcpCtx $ do
-        void $ receiveResp parseFirstLabsatMsg
-        resp <- info
-        print resp
+    runLabsatCtx (encodeUtf8 ip) port $ do
+      void $ receiveResp parseFirstLabsatMsg
+      resp <- info
+      print resp

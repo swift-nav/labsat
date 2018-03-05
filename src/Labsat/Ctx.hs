@@ -5,29 +5,30 @@
 
 module Labsat.Ctx where
 
-import Data.Conduit.Network (AppData)
+import Data.Conduit.Network (AppData, clientSettings, runGeneralTCPClient)
 import Preamble
 
-data TcpCtx = TcpCtx
-  { _tcpStatsCtx :: StatsCtx
-  , _tcpAppData :: AppData
+data LabsatCtx = LabsatCtx
+  { _lsStatsCtx  :: StatsCtx
+  , _lsAppData   :: AppData
   }
 
-$(makeClassyConstraints ''TcpCtx [''HasStatsCtx])
+$(makeClassyConstraints ''LabsatCtx [''HasStatsCtx])
 
-instance HasStatsCtx TcpCtx where
-  statsCtx = tcpStatsCtx
+instance HasStatsCtx LabsatCtx where
+  statsCtx = lsStatsCtx
 
-instance HasCtx TcpCtx where
+instance HasCtx LabsatCtx where
   ctx = statsCtx . ctx
 
-type MonadTcpCtx c m =
+type MonadLabsatCtx c m =
   ( MonadStatsCtx c m
-  , HasTcpCtx c
+  , HasLabsatCtx c
   )
 
-runTcpCtx :: MonadStatsCtx c m => AppData -> TransT TcpCtx m a -> m a
-runTcpCtx ad action = do
-  e <- view statsCtx
-  runTransT (TcpCtx e ad) action
+runLabsatCtx :: MonadStatsCtx c m => ByteString -> Int -> TransT LabsatCtx m a -> m a
+runLabsatCtx host port action =
+  runGeneralTCPClient (clientSettings port host) $ \ad -> do
+    e <- view statsCtx
+    runTransT (LabsatCtx e ad) action
 
