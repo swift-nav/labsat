@@ -77,6 +77,11 @@ logResp lf = runResourceT $ do
   withBinaryFile' lf $ \lh ->
     appSource ad =$= colorStripper $$ B.sinkHandle lh
 
+-- | Parse connection message
+--
+connectMsg :: (MonadLabsatCtx c m) => m ()
+connectMsg = receiveResp parseFirstLabsatMsg >> pure ()
+
 -- | Send a command and parser for its response.
 --
 command :: (MonadLabsatCtx c m) => ByteString -> Parser a -> m a
