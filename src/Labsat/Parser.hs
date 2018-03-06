@@ -1,14 +1,15 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Labsat.Parser where
 
 
-import qualified Data.ByteString as BS
 import           Data.Attoparsec.ByteString
-import           Data.Attoparsec.ByteString.Char8 (char, decimal, double, isDigit_w8, isEndOfLine, scientific, signed)
+import           Data.Attoparsec.ByteString.Char8 (char, decimal, double, isDigit_w8,
+                                                   isEndOfLine, scientific, signed)
+import qualified Data.ByteString                  as BS
 import           Labsat.Types
-import           Preamble hiding (takeWhile)
+import           Preamble                         hiding (takeWhile)
 
 
 --------------------------------------------------------------------------------

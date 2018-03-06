@@ -4,9 +4,9 @@
 
 -- | LabSat telnet interface
 --
+import Labsat
 import Options.Generic
 import Preamble
-import Labsat
 
 -- | Args
 --

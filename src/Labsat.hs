@@ -1,24 +1,24 @@
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE NoImplicitPrelude   #-}
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Labsat where
 
-import           Control.Concurrent.Async.Lifted   (race_)
-import           Control.Concurrent.Lifted         (threadDelay)
+import           Control.Concurrent.Async.Lifted (race_)
+import           Control.Concurrent.Lifted       (threadDelay)
 import           Data.Attoparsec.ByteString
-import qualified Data.ByteString               as BS
-import qualified Data.ByteString.Char8         as C
+import qualified Data.ByteString                 as BS
+import qualified Data.ByteString.Char8           as C
 import           Data.Conduit
 import           Data.Conduit.Attoparsec
-import qualified Data.Conduit.Binary           as B
+import qualified Data.Conduit.Binary             as B
 import           Data.Conduit.Network
-import           Data.Text.Encoding               (encodeUtf8)
+import           Data.Text.Encoding              (encodeUtf8)
 import           Labsat.Ctx
 import           Labsat.Parser
 import           Labsat.Types
 import           Preamble
-import           System.IO                 hiding (print, putStrLn)
+import           System.IO                       hiding (print, putStrLn)
 
 
 --------------------------------------------------------------------------------
