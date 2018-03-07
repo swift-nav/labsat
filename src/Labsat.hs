@@ -84,9 +84,11 @@ connectMsg = receiveResp parseFirstLabsatMsg >> pure ()
 
 -- | Send a command and parser for its response.
 --
-command :: (MonadLabsatCtx c m) => ByteString -> Parser a -> m a
+command :: MonadLabsatCtx c m => ByteString -> Parser a -> m a
 command c p = do
+  delay <- view lsDelay
   sendCmd c
+  traverse_ threadDelay delay
   receiveResp $ parseCommandAck c *> p
 
 -- | Send a command and parse for OK and the prompt
@@ -99,7 +101,7 @@ okCommand = flip command okPrompt
 debugRecv :: ByteString -> ByteString -> Int -> IO ()
 debugRecv msg host port =
   runCtx $ runStatsCtx $
-    runLabsatCtx host port $ do
+    runLabsatCtx host port Nothing $ do
       msg0 <- receiveResp parseUntilPrompt
       putStrLn "First message:"
       print msg0
@@ -111,7 +113,7 @@ debugRecv msg host port =
 
 testCommand :: (MonadStatsCtx c m, Show a) => ByteString -> Int -> TransT LabsatCtx m a -> m ()
 testCommand host port cmd =
-  runLabsatCtx host port $ do
+  runLabsatCtx host port Nothing $ do
     void $ receiveResp parseFirstLabsatMsg
     res <- cmd
     print res
@@ -492,15 +494,14 @@ confQuery = command "CONF:?" parseUntilPrompt
 
 -- | Labsat Main
 --
-labsatMain :: MonadControl m => Text -> Int -> m ()
-labsatMain ip port= do
+labsatMain :: MonadControl m => Text -> Int -> Maybe Int -> m ()
+labsatMain ip port timeout = do
   putStrLn "Labsat!"
   print ip
   print port
+  print timeout
 
   -- Example
   runCtx $ runStatsCtx $
-    runLabsatCtx (encodeUtf8 ip) port $ do
-      void $ receiveResp parseFirstLabsatMsg
-      resp <- info
-      print resp
+    runLabsatCtx (encodeUtf8 ip) port timeout $
+      connectMsg >> info >> pure ()

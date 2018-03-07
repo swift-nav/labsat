@@ -10,7 +10,11 @@ import Preamble
 
 data LabsatCtx = LabsatCtx
   { _lsStatsCtx  :: StatsCtx
+  -- ^ Parent context
   , _lsAppData   :: AppData
+  -- ^ AppData for runGeneralTCPClient
+  , _lsDelay     :: Maybe Int
+  -- ^ Command delay
   }
 
 $(makeClassyConstraints ''LabsatCtx [''HasStatsCtx])
@@ -26,9 +30,9 @@ type MonadLabsatCtx c m =
   , HasLabsatCtx c
   )
 
-runLabsatCtx :: MonadStatsCtx c m => ByteString -> Int -> TransT LabsatCtx m a -> m a
-runLabsatCtx host port action =
+runLabsatCtx :: MonadStatsCtx c m => ByteString -> Int -> Maybe Int -> TransT LabsatCtx m a -> m a
+runLabsatCtx host port timeout action =
   runGeneralTCPClient (clientSettings port host) $ \ad -> do
     e <- view statsCtx
-    runTransT (LabsatCtx e ad) action
+    runTransT (LabsatCtx e ad timeout) action
 

@@ -18,6 +18,8 @@ data Args = Args
     -- ^ Host IP.
   , port        :: Int
     -- ^ Host port.
+  , timeout     :: Maybe Int
+    -- ^ Command delay.
   } deriving (Show, Generic)
 
 instance ParseRecord Args
@@ -30,3 +32,4 @@ main = do
   labsatMain
     (ip args)
     (port args)
+    (timeout args)
