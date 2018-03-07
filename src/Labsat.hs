@@ -34,9 +34,9 @@ withBinaryFile' f = flip bracket (liftIO . hClose) $ do
 -- | Add Labsat end-of-line delimiters and send command
 --
 sendCmd :: MonadLabsatCtx c m => ByteString -> m ()
-sendCmd s = do
+sendCmd s = runResourceT $ do
   ad <- view lsAppData
-  yield (s <> "\r\r\n") $$ appSink ad
+  yield (s <> "\r\r\n") =$= B.conduitFile "labsat.log" $$ appSink ad
 
 -- | Strip ANSI color codes
 --
@@ -67,7 +67,7 @@ colorStripper = do
 receiveResp :: MonadLabsatCtx c m => Parser a -> m a
 receiveResp p = runResourceT $ do
   ad <- view lsAppData
-  appSource ad =$= colorStripper $$ sinkParser p
+  appSource ad =$= colorStripper =$= B.conduitFile "labsat.log" $$ sinkParser p
 
 -- | Receive command response, strip color codes, and log to file
 --
