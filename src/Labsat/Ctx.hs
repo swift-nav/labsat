@@ -10,11 +10,11 @@ import Preamble
 
 data LabsatCtx = LabsatCtx
   { _lsStatsCtx  :: StatsCtx
-  -- ^ Parent context
+  -- ^ Parent context.
   , _lsAppData   :: AppData
-  -- ^ AppData for runGeneralTCPClient
+  -- ^ AppData for runGeneralTCPClient.
   , _lsDelay     :: Maybe Int
-  -- ^ Command delay
+  -- ^ Command delay (seconds).
   }
 
 $(makeClassyConstraints ''LabsatCtx [''HasStatsCtx])

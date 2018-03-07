@@ -88,7 +88,7 @@ command :: MonadLabsatCtx c m => ByteString -> Parser a -> m a
 command c p = do
   delay <- view lsDelay
   sendCmd c
-  traverse_ threadDelay delay
+  traverse_ (threadDelay . (*1000000)) delay
   receiveResp $ parseCommandAck c *> p
 
 -- | Send a command and parse for OK and the prompt
