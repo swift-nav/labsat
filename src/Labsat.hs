@@ -13,6 +13,7 @@ import           Data.Conduit
 import           Data.Conduit.Attoparsec
 import qualified Data.Conduit.Binary             as B
 import           Data.Conduit.Network
+import           Data.Foldable                   (traverse_)
 import           Data.Text.Encoding              (encodeUtf8)
 import           Labsat.Ctx
 import           Labsat.Parser
