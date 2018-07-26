@@ -40,7 +40,7 @@ PlayIdle
 
 ## Development
 
-`labsat` has a shakefile/makefile to provide convience around building and testing:
+`labsat` has a shakefile/makefile to provide convenience around building and testing:
 
     # build the project's libraries, executables, and tests
     $ ./Shakefile.hs build-tests-error
