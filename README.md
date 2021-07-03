@@ -1,6 +1,6 @@
 # LabSat TCP Wrapper
 
-[![Build status][travis-img]][travis]
+[![CI](https://github.com/swift-nav/labsat/actions/workflows/ci.yaml/badge.svg)](https://github.com/swift-nav/labsat/actions/workflows/ci.yaml)
 
 This package provides a wrapper around the LabSat3 Wideband TCP interface. It is tested against
 LabSat3 Wideband Firmware 1.0.260 FPGA 33.
@@ -75,5 +75,3 @@ Copyright © 2018 Swift Navigation
 Distributed under MIT License. See [LICENSE](LICENSE)
 
 [stack]:       https://docs.haskellstack.org/en/stable/README/#how-to-install
-[travis]:      https://travis-ci.org/swift-nav/labsat
-[travis-img]:  https://travis-ci.org/swift-nav/labsat.svg?branch=master
