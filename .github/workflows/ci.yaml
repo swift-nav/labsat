@@ -7,12 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - name: Cache stack outputs
-        uses: actions/cache@v2
-        with:
-          key: ${{ runner.os }}-lts-10.4
-          path: ~/.stack
-
       - name: Cache tools
         id: cache-tools
         uses: actions/cache@v2
