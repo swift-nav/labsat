@@ -1,0 +1,24 @@
+name: CI
+on:
+  pull_request: ~
+  push: ~
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      STACK_YAML: stack.yaml
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+      - name: Install stack
+        run: |
+          mkdir -p $HOME/.local/bin
+          curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install tools
+        run: |
+          stack install hlint weeder
+      - name: Run build
+        run: |
+          ./Shakefile.hs sanity
+          stack test
