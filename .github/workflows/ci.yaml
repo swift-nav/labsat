@@ -11,7 +11,6 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install tools
-        if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           stack install hlint weeder
           
