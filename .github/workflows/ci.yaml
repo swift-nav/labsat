@@ -24,13 +24,7 @@ jobs:
         if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           stack install hlint weeder
-
-      - name: Install stack
-        run: |
-          mkdir -p $HOME/.local/bin
-          curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
+          
       - name: Run sanity check
         run: |
           ./Shakefile.hs sanity
