@@ -13,10 +13,17 @@ jobs:
           mkdir -p $HOME/.local/bin
           curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Cache stack outputs
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-lts-10.4
+          path: ~/.stack
       - name: Install tools
         run: |
           stack install hlint weeder
-      - name: Run build
+      - name: Run sanity check
         run: |
           ./Shakefile.hs sanity
+      - name: Run tests
+        run: |
           stack test
