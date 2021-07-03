@@ -6,24 +6,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v2
-      - name: Install stack
-        run: |
-          mkdir -p $HOME/.local/bin
-          curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Cache stack outputs
         uses: actions/cache@v2
         with:
           key: ${{ runner.os }}-lts-10.4
           path: ~/.stack
+
+      - name: Cache tools
+        id: cache-tools
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-lts-10.4
+          path: |
+            ~/.local/bin/hlint
+            ~/.local/bin/weeder
+
       - name: Install tools
+        if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           stack install hlint weeder
+
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Install stack
+        run: |
+          mkdir -p $HOME/.local/bin
+          curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Run sanity check
         run: |
           ./Shakefile.hs sanity
+
       - name: Run tests
         run: |
           stack test

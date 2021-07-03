@@ -33,8 +33,6 @@ library
                      , scientific
                      , preamble
                      , text
-                     , tasty
-                     , tasty-hunit
 
 executable labsat
   default-language:    Haskell2010
@@ -46,8 +44,6 @@ executable labsat
                      , optparse-generic
                      , preamble
                      , text
-                     , tasty
-                     , tasty-hunit
 
 test-suite test
   type:                exitcode-stdio-1.0
