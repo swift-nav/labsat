@@ -18,6 +18,7 @@ jobs:
           path: |
             ~/.local/bin/hlint
             ~/.local/bin/weeder
+            ~/.local/bin/data/
 
       - name: Install tools
         if: steps.cache-tools.outputs.cache-hit != 'true'
