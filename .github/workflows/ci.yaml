@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+      - name: Checkout source
+        uses: actions/checkout@v2
+
       - name: Cache tools
         id: cache-tools
         uses: actions/cache@v2
@@ -20,9 +23,6 @@ jobs:
         if: steps.cache-tools.outputs.cache-hit != 'true'
         run: |
           stack install hlint weeder
-
-      - name: Checkout source
-        uses: actions/checkout@v2
 
       - name: Install stack
         run: |
